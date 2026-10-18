@@ -34,9 +34,15 @@ typedef struct {
     /* preferences dialog fields, while it is open */
     GtkWidget *p_host, *p_port, *p_user, *p_pass, *p_provider, *p_model, *p_key, *p_url, *p_owners, *p_listen, *p_steps;
     char *p_last_provider;
+
+    GtkWidget *model_dd;  /* header: switch provider (and its saved profile) */
+    GtkStringList *model_names;
+    gboolean model_dd_sync; /* changing the selection from code */
 } App;
 
 static App *A; /* one window per application instance */
+
+static void refresh_model_menu(void);
 
 /* ---- small helpers ---- */
 
@@ -249,6 +255,53 @@ static void apply_settings(void)
     }
     adw_banner_set_revealed(A->banner, problem != NULL);
     g_free(problem);
+}
+
+/* ---- switching models ---- */
+
+/* "Gemini · gemini-x" for each provider, from the saved profiles. */
+static void refresh_model_menu(void)
+{
+    A->model_dd_sync = TRUE;
+    guint n = g_list_model_get_n_items(G_LIST_MODEL(A->model_names)), sel = 0;
+    const char **labels = g_new0(const char *, llm_n_providers + 1);
+    char **owned = g_new0(char *, llm_n_providers + 1);
+    for (int k = 0; k < llm_n_providers; k++) {
+        const LlmProvider *p = &llm_providers[k];
+        char *model, *url, *key;
+        if (!g_strcmp0(p->id, A->settings->provider)) {
+            model = g_strdup(A->settings->model);
+            sel = k;
+        } else {
+            settings_load_profile(p->id, &model, &url, &key);
+            memset(key, 0, strlen(key));
+            g_free(url), g_free(key);
+        }
+        owned[k] = *model ? g_strdup_printf("%s · %s", p->label, model) : g_strdup_printf("%s (not set up)", p->label);
+        labels[k] = owned[k];
+        g_free(model);
+    }
+    gtk_string_list_splice(A->model_names, 0, n, labels);
+    gtk_drop_down_set_selected(GTK_DROP_DOWN(A->model_dd), sel);
+    g_strfreev(owned);
+    g_free(labels);
+    A->model_dd_sync = FALSE;
+}
+
+static void model_switched(GObject *dd, GParamSpec *ps, gpointer ud)
+{
+    (void)dd, (void)ps, (void)ud;
+    if (A->model_dd_sync)
+        return;
+    guint i = gtk_drop_down_get_selected(GTK_DROP_DOWN(A->model_dd));
+    if (i >= (guint)llm_n_providers || !g_strcmp0(llm_providers[i].id, A->settings->provider))
+        return;
+    settings_use_provider(A->settings, llm_providers[i].id);
+    apply_settings();
+    refresh_model_menu();
+    if (*A->settings->model)
+        toast("Now using %s · %s%s", llm_providers[i].label, A->settings->model,
+              agent_busy(A->agent) ? " (from the next step)" : "");
 }
 
 /* ---- connection and status ---- */
@@ -593,11 +646,25 @@ static void provider_changed(GObject *row, GParamSpec *ps, gpointer ud)
     (void)row, (void)ps, (void)ud;
     const LlmProvider *p = selected_provider();
     if (g_strcmp0(p->id, A->p_last_provider)) {
-        /* each provider keeps its own key */
-        char *key = settings_lookup_api_key(p->id);
+        /* each provider keeps its own profile: save what was typed for the
+         * previous one, and bring back the saved model, address and key */
+        char *m = g_strstrip(g_strdup(gtk_editable_get_text(GTK_EDITABLE(A->p_model))));
+        char *u = g_strstrip(g_strdup(gtk_editable_get_text(GTK_EDITABLE(A->p_url))));
+        char *k = g_strstrip(g_strdup(gtk_editable_get_text(GTK_EDITABLE(A->p_key))));
+        char *why = NULL;
+        if (A->p_last_provider && !settings_save_profile(A->p_last_provider, m, u, k, &why)) {
+            toast("%s", why);
+            g_free(why);
+        }
+        memset(k, 0, strlen(k));
+        g_free(m), g_free(u), g_free(k);
+        char *model, *url, *key;
+        settings_load_profile(p->id, &model, &url, &key);
+        gtk_editable_set_text(GTK_EDITABLE(A->p_model), model);
+        gtk_editable_set_text(GTK_EDITABLE(A->p_url), url);
         gtk_editable_set_text(GTK_EDITABLE(A->p_key), key);
         memset(key, 0, strlen(key));
-        g_free(key);
+        g_free(model), g_free(url), g_free(key);
         g_free(A->p_last_provider);
         A->p_last_provider = g_strdup(p->id);
     }
@@ -640,6 +707,7 @@ static void prefs_closed(AdwDialog *d, gpointer ud)
     }
     g_clear_pointer(&A->p_last_provider, g_free);
     apply_settings();
+    refresh_model_menu();
 }
 
 static void show_prefs(void)
@@ -953,6 +1021,11 @@ void minellm_window_activate(AdwApplication *app)
     A->connect_btn = gtk_button_new_with_label("Connect");
     g_signal_connect(A->connect_btn, "clicked", G_CALLBACK(connect_clicked), NULL);
     adw_header_bar_pack_start(ADW_HEADER_BAR(header), A->connect_btn);
+    A->model_names = gtk_string_list_new(NULL);
+    A->model_dd = gtk_drop_down_new(G_LIST_MODEL(g_object_ref(A->model_names)), NULL);
+    gtk_widget_set_tooltip_text(A->model_dd, "Model: each provider keeps its own model, address and key");
+    g_signal_connect(A->model_dd, "notify::selected", G_CALLBACK(model_switched), NULL);
+    adw_header_bar_pack_start(ADW_HEADER_BAR(header), A->model_dd);
     GMenu *menu = g_menu_new();
     g_menu_append(menu, "New Conversation", "app.reset");
     g_menu_append(menu, "Preferences", "app.preferences");
@@ -984,6 +1057,7 @@ void minellm_window_activate(AdwApplication *app)
 
     update_title();
     apply_settings();
+    refresh_model_menu();
     char *msg = g_strdup_printf("MineLLM %s: %d tools, core %s", MINELLM_VERSION, agent_tool_count(A->agent),
                                 core_client_socket_path(A->core));
     log_line(msg);

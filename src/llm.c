@@ -65,11 +65,46 @@ static JsonNode *obj_node(JsonObject *o)
     return json_node_init_object(json_node_alloc(), o);
 }
 
+/* Gemini wants a thought signature on the tool calls of earlier turns; calls
+ * made by another model (after switching providers) have none, and Google
+ * documents this placeholder for them. */
+#define GEMINI_NO_SIGNATURE "skip_thought_signature_validator"
+
+/* The conversation as this provider takes it: extra_content (Gemini's) only
+ * goes back to Gemini. */
+static JsonArray *messages_for(const LlmConfig *c, JsonArray *messages)
+{
+    gboolean google = !g_strcmp0(c->provider, "google");
+    JsonArray *out = json_array_new();
+    for (guint k = 0; k < json_array_get_length(messages); k++) {
+        JsonNode *n = json_node_copy(json_array_get_element(messages, k));
+        JsonObject *m = json_node_get_object(n);
+        JsonArray *calls = json_object_has_member(m, "tool_calls") ? json_object_get_array_member(m, "tool_calls") : NULL;
+        if (!google) {
+            json_object_remove_member(m, "extra_content");
+            for (guint i = 0; calls && i < json_array_get_length(calls); i++)
+                json_object_remove_member(json_array_get_object_element(calls, i), "extra_content");
+        } else if (calls && json_array_get_length(calls)) {
+            gboolean signed_ = FALSE;
+            for (guint i = 0; i < json_array_get_length(calls); i++)
+                signed_ |= json_object_has_member(json_array_get_object_element(calls, i), "extra_content");
+            if (!signed_) {
+                JsonObject *g = json_object_new(), *e = json_object_new();
+                json_object_set_string_member(g, "thought_signature", GEMINI_NO_SIGNATURE);
+                json_object_set_object_member(e, "google", g);
+                json_object_set_object_member(json_array_get_object_element(calls, 0), "extra_content", e);
+            }
+        }
+        json_array_add_element(out, n);
+    }
+    return out;
+}
+
 static JsonObject *openai_body(const LlmConfig *c, JsonArray *messages, JsonArray *tools)
 {
     JsonObject *b = json_object_new();
     json_object_set_string_member(b, "model", c->model);
-    json_object_set_array_member(b, "messages", json_array_ref(messages));
+    json_object_set_array_member(b, "messages", messages_for(c, messages));
     if (tools && json_array_get_length(tools))
         json_object_set_array_member(b, "tools", json_array_ref(tools));
     int max = c->max_tokens > 0 ? c->max_tokens : 4096;

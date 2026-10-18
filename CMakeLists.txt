@@ -58,3 +58,5 @@ target_compile_definitions(window_shot PRIVATE MINELLM_VERSION="${PROJECT_VERSIO
 target_link_libraries(window_shot PRIVATE PkgConfig::DEPS)
 add_executable(llm_roundtrip EXCLUDE_FROM_ALL tests/llm_roundtrip.c src/llm.c)
 target_link_libraries(llm_roundtrip PRIVATE PkgConfig::DEPS)
+add_executable(profile_test EXCLUDE_FROM_ALL tests/profile_test.c src/settings.c)
+target_link_libraries(profile_test PRIVATE PkgConfig::DEPS)

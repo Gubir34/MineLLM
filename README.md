@@ -59,9 +59,12 @@ start the message with `!` (`!come here`). The bot answers them in the chat. Oth
 are never treated as instructions. On offline-mode servers names can be faked, so only use owner
 orders where players have to log in.
 
-The password and API keys are stored in the desktop keyring (Secret Service), not in
-`~/.config/minellm/settings.ini`. `MC_LOGIN_PASSWORD` in the environment is used when the keyring
-has no password.
+Each provider keeps its own profile (model, API address, API key), so switching between, say,
+Ollama and Gemini is one click in the model menu next to Connect, and works in the middle of a
+conversation. The profiles and the login password are stored encrypted in the desktop keyring
+(Secret Service: KWallet, GNOME Keyring, KeePassXC...); `~/.config/minellm/settings.ini` only
+remembers which provider is in use. Without a keyring they last until the app closes.
+`MC_LOGIN_PASSWORD` in the environment is used when the keyring has no password.
 
 ## How it fits together
 
@@ -81,7 +84,8 @@ has no password.
   `tools/gen_tools.py` (needs `npm ci` in `core/mcp`). Each tool name is the core command it runs.
 
 Developer tools (not installed): `agent_probe` runs one request without the window,
-`llm_roundtrip` (with `tests/mock_gemini.py`) checks that Gemini thought signatures survive a tool call, and
+`llm_roundtrip` (with `tests/mock_gemini.py`) checks that Gemini thought signatures survive a tool call and
+a provider switch, `profile_test` checks the keyring profiles (it uses the `groq` and `custom` entries), and
 `window_shot` saves a PNG of the window on a headless GTK backend:
 
 ```sh
