@@ -1,0 +1,29 @@
+.user-bubble {
+  background: alpha(@accent_bg_color, 0.18);
+  border-radius: 14px;
+  padding: 8px 12px;
+}
+.reply-bubble {
+  background: @card_bg_color;
+  border-radius: 14px;
+  padding: 10px 14px;
+  box-shadow: 0 1px 2px alpha(black, 0.12);
+}
+.tool-call {
+  font-family: monospace;
+  font-size: smaller;
+  opacity: 0.75;
+  margin-top: 2px;
+}
+.tool-ok, .tool-fail, .tool-detail {
+  font-family: monospace;
+  font-size: smaller;
+}
+.tool-ok { color: @success_color; }
+.tool-fail { color: @error_color; }
+.tool-detail {
+  color: @window_fg_color;
+  opacity: 0.8;
+  margin: 4px 0 4px 18px;
+}
+.log { font-size: smaller; }

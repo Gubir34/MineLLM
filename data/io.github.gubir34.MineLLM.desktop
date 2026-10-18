@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=MineLLM
+GenericName=Minecraft AI Player
+Comment=A Minecraft player driven by a language model
+Exec=minellm
+Icon=io.github.gubir34.MineLLM
+Terminal=false
+Categories=Game;
+Keywords=minecraft;bot;ai;llm;ollama;
+StartupNotify=true

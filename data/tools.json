@@ -1,0 +1,1425 @@
+[
+ {
+  "name": "chat",
+  "description": "Send a chat message (max 256 characters). Messages starting with / are sent as commands.",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "message": {
+     "type": "string",
+     "minLength": 1,
+     "maxLength": 256
+    }
+   },
+   "required": [
+    "message"
+   ]
+  }
+ },
+ {
+  "name": "read_chat",
+  "description": "Read chat and system messages. Without `since`, returns messages received since the previous read_chat call.",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "since": {
+     "description": "return messages with seq greater than this",
+     "type": "integer",
+     "minimum": 0,
+     "maximum": 9007199254740991
+    },
+    "limit": {
+     "description": "maximum messages (newest kept), default 50",
+     "type": "integer",
+     "minimum": 1,
+     "maximum": 500
+    }
+   }
+  }
+ },
+ {
+  "name": "status",
+  "description": "Connection state, position, health and the last disconnect/kick reason.",
+  "parameters": {
+   "type": "object",
+   "properties": {}
+  }
+ },
+ {
+  "name": "look_around",
+  "description": "Describe the surroundings: position, what the bot stands on, nearby players, mobs and dropped items, and the nearest notable blocks (trees/logs, ores, water, lava, chests, crafting tables, beds) with coordinates.",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "radius": {
+     "description": "block radius, default 24",
+     "type": "number",
+     "minimum": 4,
+     "maximum": 96
+    }
+   }
+  }
+ },
+ {
+  "name": "find_block",
+  "description": "Find the nearest blocks of a type (e.g. oak_log, iron_ore) in the loaded world.",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "name": {
+     "type": "string",
+     "description": "block id, with or without minecraft:"
+    },
+    "count": {
+     "type": "integer",
+     "minimum": 1,
+     "maximum": 50
+    },
+    "max_distance": {
+     "type": "number",
+     "minimum": 1,
+     "maximum": 256
+    }
+   },
+   "required": [
+    "name"
+   ]
+  }
+ },
+ {
+  "name": "move_to",
+  "description": "Walk to a position using pathfinding: walks, jumps, ladders, opens and closes doors, sprints on straight stretches, and when needed digs through natural terrain (never through built blocks), bridges gaps and pillars up with scaffold blocks (dirt, cobblestone...). Avoids lava/fire/cactus. Give x and z, and y if a specific height matters. Waits until the bot arrives or gives up (wait=false returns at once).",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "x": {
+     "type": "number"
+    },
+    "y": {
+     "type": "number"
+    },
+    "z": {
+     "type": "number"
+    },
+    "range": {
+     "description": "how close is close enough, default 1",
+     "type": "number",
+     "minimum": 0.5,
+     "maximum": 32
+    },
+    "dig": {
+     "description": "false: never dig on the way",
+     "type": "boolean"
+    },
+    "place": {
+     "description": "false: never place scaffold blocks on the way",
+     "type": "boolean"
+    },
+    "wait": {
+     "description": "false: return at once and keep walking, so hand actions with while_moving can run meanwhile",
+     "type": "boolean"
+    }
+   },
+   "required": [
+    "x",
+    "z"
+   ]
+  }
+ },
+ {
+  "name": "go_to_player",
+  "description": "Walk to a player that is within view distance.",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "range": {
+     "type": "number",
+     "minimum": 1,
+     "maximum": 16
+    },
+    "wait": {
+     "description": "false: return at once and keep walking, so hand actions with while_moving can run meanwhile",
+     "type": "boolean"
+    }
+   },
+   "required": [
+    "name"
+   ]
+  }
+ },
+ {
+  "name": "stop",
+  "description": "Stop the current task and any parallel (while_moving) actions.",
+  "parameters": {
+   "type": "object",
+   "properties": {}
+  }
+ },
+ {
+  "name": "dig_block",
+  "description": "Walk within reach of a block, look at it, pick the best tool and break it with vanilla timing. Reports clearly if the server refuses the break (protected area).",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "x": {
+     "type": "integer",
+     "minimum": -9007199254740991,
+     "maximum": 9007199254740991
+    },
+    "y": {
+     "type": "integer",
+     "minimum": -9007199254740991,
+     "maximum": 9007199254740991
+    },
+    "z": {
+     "type": "integer",
+     "minimum": -9007199254740991,
+     "maximum": 9007199254740991
+    },
+    "while_moving": {
+     "description": "true: do it while a move_to/go_to_player keeps walking (start that one with wait=false); waits until the spot comes within reach",
+     "type": "boolean"
+    }
+   },
+   "required": [
+    "x",
+    "y",
+    "z"
+   ]
+  }
+ },
+ {
+  "name": "collect_block",
+  "description": "Find, dig and pick up blocks of a type until `count` items of it are in the inventory (handles whole trees dropping at once).",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "count": {
+     "type": "integer",
+     "minimum": 1,
+     "maximum": 256
+    }
+   },
+   "required": [
+    "name",
+    "count"
+   ]
+  }
+ },
+ {
+  "name": "get_inventory",
+  "description": "List the items in the bot's inventory.",
+  "parameters": {
+   "type": "object",
+   "properties": {}
+  }
+ },
+ {
+  "name": "equip",
+  "description": "Hold an item from the inventory in the main hand (moves it to the hotbar if needed).",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "item": {
+     "type": "string",
+     "description": "item id, e.g. iron_axe"
+    }
+   },
+   "required": [
+    "item"
+   ]
+  }
+ },
+ {
+  "name": "interact_block",
+  "description": "Right-click a block (door, trapdoor, fence gate, button, lever...), optionally with an item in hand (a hoe on dirt tills it). Walks within reach first and reports the new block state.",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "x": {
+     "type": "integer",
+     "minimum": -9007199254740991,
+     "maximum": 9007199254740991
+    },
+    "y": {
+     "type": "integer",
+     "minimum": -9007199254740991,
+     "maximum": 9007199254740991
+    },
+    "z": {
+     "type": "integer",
+     "minimum": -9007199254740991,
+     "maximum": 9007199254740991
+    },
+    "item": {
+     "type": "string"
+    },
+    "while_moving": {
+     "description": "true: do it while a move_to/go_to_player keeps walking (start that one with wait=false); waits until the spot comes within reach",
+     "type": "boolean"
+    }
+   },
+   "required": [
+    "x",
+    "y",
+    "z"
+   ]
+  }
+ },
+ {
+  "name": "place_block",
+  "description": "Place a block from the inventory at x,y,z. The spot must be empty or replaceable (grass, water) with a solid neighbour. Reports clearly if the server refuses (claim).",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "item": {
+     "type": "string"
+    },
+    "x": {
+     "type": "integer",
+     "minimum": -9007199254740991,
+     "maximum": 9007199254740991
+    },
+    "y": {
+     "type": "integer",
+     "minimum": -9007199254740991,
+     "maximum": 9007199254740991
+    },
+    "z": {
+     "type": "integer",
+     "minimum": -9007199254740991,
+     "maximum": 9007199254740991
+    },
+    "while_moving": {
+     "description": "true: do it while a move_to/go_to_player keeps walking (start that one with wait=false); waits until the spot comes within reach",
+     "type": "boolean"
+    }
+   },
+   "required": [
+    "item",
+    "x",
+    "y",
+    "z"
+   ]
+  }
+ },
+ {
+  "name": "shelter",
+  "description": "Dig into the ground three blocks and close walls and roof with scaffold blocks: a safe hole for the night or when mobs are around. move_to digs the way out again.",
+  "parameters": {
+   "type": "object",
+   "properties": {}
+  }
+ },
+ {
+  "name": "open_container",
+  "description": "Open a chest, barrel, furnace or crafting table at x,y,z and list what is inside. The window stays open for container_take/put.",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "x": {
+     "type": "integer",
+     "minimum": -9007199254740991,
+     "maximum": 9007199254740991
+    },
+    "y": {
+     "type": "integer",
+     "minimum": -9007199254740991,
+     "maximum": 9007199254740991
+    },
+    "z": {
+     "type": "integer",
+     "minimum": -9007199254740991,
+     "maximum": 9007199254740991
+    }
+   },
+   "required": [
+    "x",
+    "y",
+    "z"
+   ]
+  }
+ },
+ {
+  "name": "container_take",
+  "description": "Move items from the open container into the inventory (exact count).",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "item": {
+     "type": "string"
+    },
+    "count": {
+     "type": "integer",
+     "minimum": 1,
+     "maximum": 2304
+    }
+   },
+   "required": [
+    "item",
+    "count"
+   ]
+  }
+ },
+ {
+  "name": "container_put",
+  "description": "Move items from the inventory into the open container (exact count).",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "item": {
+     "type": "string"
+    },
+    "count": {
+     "type": "integer",
+     "minimum": 1,
+     "maximum": 2304
+    }
+   },
+   "required": [
+    "item",
+    "count"
+   ]
+  }
+ },
+ {
+  "name": "close_container",
+  "description": "Close the open container window.",
+  "parameters": {
+   "type": "object",
+   "properties": {}
+  }
+ },
+ {
+  "name": "craft",
+  "description": "Craft an item (recipes from the server jar). Uses the 2x2 inventory grid when possible, otherwise walks to the nearest crafting table within 32 blocks. Craft intermediate items first (e.g. planks, then sticks).",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "item": {
+     "type": "string"
+    },
+    "count": {
+     "type": "integer",
+     "minimum": 1,
+     "maximum": 256
+    }
+   },
+   "required": [
+    "item"
+   ]
+  }
+ },
+ {
+  "name": "eat",
+  "description": "Eat food (the best one in the inventory if not given). Vanilla only allows eating at food 19 or less.",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "item": {
+     "type": "string"
+    }
+   }
+  }
+ },
+ {
+  "name": "use_item",
+  "description": "Use (right-click) an item in the air, e.g. a bucket or a potion. Give x,y,z to aim at a block first (a bucket at water).",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "item": {
+     "type": "string"
+    },
+    "x": {
+     "type": "integer",
+     "minimum": -9007199254740991,
+     "maximum": 9007199254740991
+    },
+    "y": {
+     "type": "integer",
+     "minimum": -9007199254740991,
+     "maximum": 9007199254740991
+    },
+    "z": {
+     "type": "integer",
+     "minimum": -9007199254740991,
+     "maximum": 9007199254740991
+    },
+    "hand": {
+     "description": "offhand: use what the off hand holds",
+     "type": "string",
+     "enum": [
+      "main",
+      "offhand"
+     ]
+    },
+    "while_moving": {
+     "description": "true: do it while a move_to/go_to_player keeps walking (start that one with wait=false); waits until the spot comes within reach",
+     "type": "boolean"
+    }
+   }
+  }
+ },
+ {
+  "name": "list_entities",
+  "description": "Living entities around the bot with their ids, nearest first: by default only those on screen (in the field of view and not hidden behind blocks); all=true lists everything within the radius. Use an id with attack to hit that exact one. kind is hostile, protected (tamed pet or villager), player or other.",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "radius": {
+     "type": "number",
+     "exclusiveMinimum": 0,
+     "maximum": 96
+    },
+    "all": {
+     "type": "boolean"
+    }
+   }
+  }
+ },
+ {
+  "name": "attack",
+  "description": "Fight a target until it dies: an entity id from list_entities (\"id:123\"), a player name (players only when named), a mob type (zombie, drowned...) or nearest_hostile. Tamed pets and villagers are protected: the first request is refused with a one-time code; attack them only if that is really intended, by repeating the request with target \"id:N\" and confirm set to the code. Uses the best weapon, respects the attack cooldown, never lets a sword sweep hurt bystanders, and retreats when health drops to 6 or less.",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "target": {
+     "type": "string"
+    },
+    "confirm": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "target"
+   ]
+  }
+ },
+ {
+  "name": "shoot",
+  "description": "Shoot a target with a bow (or crossbow) until it dies: same target rules as attack (an id from list_entities, a player name, a mob type or nearest_hostile; tamed pets and villagers need the confirm code). Aims with arrow drop and target movement, only shoots with a clear line of sight, and walks closer when it has none.",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "target": {
+     "type": "string"
+    },
+    "confirm": {
+     "type": "string"
+    },
+    "count": {
+     "type": "integer",
+     "minimum": 1,
+     "maximum": 64
+    }
+   },
+   "required": [
+    "target"
+   ]
+  }
+ },
+ {
+  "name": "equip_armor",
+  "description": "Put on the best helmet, chestplate, leggings and boots from the inventory.",
+  "parameters": {
+   "type": "object",
+   "properties": {}
+  }
+ },
+ {
+  "name": "offhand",
+  "description": "Move an item into the off hand (shield, torch, food, totem...), like the F key. Without item it swaps the two hands.",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "item": {
+     "type": "string"
+    }
+   }
+  }
+ },
+ {
+  "name": "smelt",
+  "description": "Smelt in a furnace (or blast furnace / smoker when the recipe allows): item is what goes in (raw_iron) or what should come out (iron_ingot). Uses the nearest furnace within 32 blocks or places one from the inventory, adds just enough fuel (coal, charcoal, wood...), waits and takes the results out.",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "item": {
+     "type": "string"
+    },
+    "count": {
+     "type": "integer",
+     "minimum": 1,
+     "maximum": 64
+    }
+   },
+   "required": [
+    "item"
+   ]
+  }
+ },
+ {
+  "name": "drop",
+  "description": "Drop items from the inventory on the ground.",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "item": {
+     "type": "string"
+    },
+    "count": {
+     "type": "integer",
+     "minimum": 1,
+     "maximum": 9007199254740991
+    }
+   },
+   "required": [
+    "item"
+   ]
+  }
+ },
+ {
+  "name": "give",
+  "description": "Walk up to a player and toss them items.",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "player": {
+     "type": "string"
+    },
+    "item": {
+     "type": "string"
+    },
+    "count": {
+     "type": "integer",
+     "minimum": 1,
+     "maximum": 9007199254740991
+    }
+   },
+   "required": [
+    "player",
+    "item"
+   ]
+  }
+ },
+ {
+  "name": "bucket",
+  "description": "fill: scoop a water/lava source at x,y,z with an empty bucket. empty: pour a filled bucket into the cell x,y,z.",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "action": {
+     "type": "string",
+     "enum": [
+      "fill",
+      "empty"
+     ]
+    },
+    "x": {
+     "type": "integer",
+     "minimum": -9007199254740991,
+     "maximum": 9007199254740991
+    },
+    "y": {
+     "type": "integer",
+     "minimum": -9007199254740991,
+     "maximum": 9007199254740991
+    },
+    "z": {
+     "type": "integer",
+     "minimum": -9007199254740991,
+     "maximum": 9007199254740991
+    }
+   },
+   "required": [
+    "action",
+    "x",
+    "y",
+    "z"
+   ]
+  }
+ },
+ {
+  "name": "sleep",
+  "description": "Sleep in the nearest bed (32 blocks): sets the respawn point; the night passes once enough players sleep. Any new task gets up.",
+  "parameters": {
+   "type": "object",
+   "properties": {}
+  }
+ },
+ {
+  "name": "farm",
+  "description": "Harvest grown crops (wheat, carrots, potatoes, beetroots, nether wart) around the bot, replant them and pick up the drops.",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "radius": {
+     "type": "integer",
+     "minimum": 1,
+     "maximum": 32
+    },
+    "max": {
+     "type": "integer",
+     "minimum": 1,
+     "maximum": 256
+    }
+   }
+  }
+ },
+ {
+  "name": "write_sign",
+  "description": "Write up to 4 lines on the sign at x,y,z; with item (e.g. oak_sign) it places a new sign there first.",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "x": {
+     "type": "integer",
+     "minimum": -9007199254740991,
+     "maximum": 9007199254740991
+    },
+    "y": {
+     "type": "integer",
+     "minimum": -9007199254740991,
+     "maximum": 9007199254740991
+    },
+    "z": {
+     "type": "integer",
+     "minimum": -9007199254740991,
+     "maximum": 9007199254740991
+    },
+    "lines": {
+     "maxItems": 4,
+     "type": "array",
+     "items": {
+      "type": "string",
+      "maxLength": 90
+     }
+    },
+    "item": {
+     "type": "string"
+    },
+    "back": {
+     "type": "boolean"
+    }
+   },
+   "required": [
+    "x",
+    "y",
+    "z",
+    "lines"
+   ]
+  }
+ },
+ {
+  "name": "write_book",
+  "description": "Write pages into a book and quill from the inventory; with a title the book is signed (cannot be edited again).",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "pages": {
+     "minItems": 1,
+     "maxItems": 100,
+     "type": "array",
+     "items": {
+      "type": "string",
+      "maxLength": 1024
+     }
+    },
+    "title": {
+     "type": "string",
+     "maxLength": 32
+    }
+   },
+   "required": [
+    "pages"
+   ]
+  }
+ },
+ {
+  "name": "trade",
+  "description": "Buy from the nearest villager or wandering trader (or villager \"id:N\"): item is what to get, times how often. Lists the offers when the trade is not possible.",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "item": {
+     "type": "string"
+    },
+    "times": {
+     "type": "integer",
+     "minimum": 1,
+     "maximum": 64
+    },
+    "villager": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "item"
+   ]
+  }
+ },
+ {
+  "name": "enchant",
+  "description": "Enchant an item at the nearest enchanting table with lapis from the inventory: option 1-3, or the best the bot's levels allow.",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "item": {
+     "type": "string"
+    },
+    "option": {
+     "type": "integer",
+     "minimum": 1,
+     "maximum": 3
+    }
+   },
+   "required": [
+    "item"
+   ]
+  }
+ },
+ {
+  "name": "anvil",
+  "description": "Use the nearest anvil: rename an item and/or combine it with a second one (repair, enchanted book). Costs levels.",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "item": {
+     "type": "string"
+    },
+    "rename": {
+     "type": "string",
+     "maxLength": 50
+    },
+    "with": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "item"
+   ]
+  }
+ },
+ {
+  "name": "brew",
+  "description": "Brew at the nearest brewing stand: up to three bottles (potion items, default any 'potion') plus an ingredient; adds blaze powder when the stand has no fuel.",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "ingredient": {
+     "type": "string"
+    },
+    "bottle": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "ingredient"
+   ]
+  }
+ },
+ {
+  "name": "smithing",
+  "description": "Use the nearest smithing table: template + base + addition (e.g. netherite upgrade, armor trims).",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "template": {
+     "type": "string"
+    },
+    "base": {
+     "type": "string"
+    },
+    "addition": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "template",
+    "base",
+    "addition"
+   ]
+  }
+ },
+ {
+  "name": "stonecut",
+  "description": "Cut blocks at the nearest stonecutter, e.g. input stone, output stone_bricks.",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "input": {
+     "type": "string"
+    },
+    "output": {
+     "type": "string"
+    },
+    "count": {
+     "type": "integer",
+     "minimum": 1,
+     "maximum": 512
+    }
+   },
+   "required": [
+    "input",
+    "output"
+   ]
+  }
+ },
+ {
+  "name": "loom",
+  "description": "Add a pattern to a banner at the nearest loom (patterns that need no pattern item, e.g. stripe_top, cross, border).",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "banner": {
+     "type": "string"
+    },
+    "dye": {
+     "type": "string"
+    },
+    "pattern": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "banner",
+    "dye",
+    "pattern"
+   ]
+  }
+ },
+ {
+  "name": "build",
+  "description": "Build with blocks from the inventory, working from outside: either blocks (a list of {x,y,z,item}) or a shape (line, wall, floor, box, hollow_box) between from and to with one item. Lower layers first; each block needs something solid next to it. Skips blocks already there, reports refused ones. Up to 1024 blocks.",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "blocks": {
+     "maxItems": 1024,
+     "type": "array",
+     "items": {
+      "type": "object",
+      "properties": {
+       "x": {
+        "type": "integer",
+        "minimum": -9007199254740991,
+        "maximum": 9007199254740991
+       },
+       "y": {
+        "type": "integer",
+        "minimum": -9007199254740991,
+        "maximum": 9007199254740991
+       },
+       "z": {
+        "type": "integer",
+        "minimum": -9007199254740991,
+        "maximum": 9007199254740991
+       },
+       "item": {
+        "type": "string"
+       }
+      },
+      "required": [
+       "x",
+       "y",
+       "z",
+       "item"
+      ]
+     }
+    },
+    "shape": {
+     "type": "string",
+     "enum": [
+      "line",
+      "wall",
+      "floor",
+      "box",
+      "hollow_box"
+     ]
+    },
+    "from": {
+     "type": "object",
+     "properties": {
+      "x": {
+       "type": "integer",
+       "minimum": -9007199254740991,
+       "maximum": 9007199254740991
+      },
+      "y": {
+       "type": "integer",
+       "minimum": -9007199254740991,
+       "maximum": 9007199254740991
+      },
+      "z": {
+       "type": "integer",
+       "minimum": -9007199254740991,
+       "maximum": 9007199254740991
+      }
+     },
+     "required": [
+      "x",
+      "y",
+      "z"
+     ]
+    },
+    "to": {
+     "type": "object",
+     "properties": {
+      "x": {
+       "type": "integer",
+       "minimum": -9007199254740991,
+       "maximum": 9007199254740991
+      },
+      "y": {
+       "type": "integer",
+       "minimum": -9007199254740991,
+       "maximum": 9007199254740991
+      },
+      "z": {
+       "type": "integer",
+       "minimum": -9007199254740991,
+       "maximum": 9007199254740991
+      }
+     },
+     "required": [
+      "x",
+      "y",
+      "z"
+     ]
+    },
+    "item": {
+     "type": "string"
+    }
+   }
+  }
+ },
+ {
+  "name": "mount",
+  "description": "Get into the nearest boat (default) or onto a tamed, saddled horse/donkey/mule; target can also be \"id:N\".",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "target": {
+     "type": "string"
+    }
+   }
+  }
+ },
+ {
+  "name": "dismount",
+  "description": "Get off the boat or horse.",
+  "parameters": {
+   "type": "object",
+   "properties": {}
+  }
+ },
+ {
+  "name": "ride_to",
+  "description": "Steer the boat or horse the bot is riding to x,z in a straight line (horses jump small obstacles).",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "x": {
+     "type": "number"
+    },
+    "z": {
+     "type": "number"
+    }
+   },
+   "required": [
+    "x",
+    "z"
+   ]
+  }
+ },
+ {
+  "name": "portal",
+  "description": "Walk into the nearest nether/end portal (48 blocks) and wait until the server moves the bot to the other dimension (up to 45 s after a recent trip).",
+  "parameters": {
+   "type": "object",
+   "properties": {}
+  }
+ },
+ {
+  "name": "fly_to",
+  "description": "Fly with the elytra worn in the chest slot to x,z: jumps, opens the wings, climbs with firework rockets from the inventory, glides and lands.",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "x": {
+     "type": "number"
+    },
+    "z": {
+     "type": "number"
+    }
+   },
+   "required": [
+    "x",
+    "z"
+   ]
+  }
+ },
+ {
+  "name": "set_reflexes",
+  "description": "Change what the bot does on its own: defend (hit hostile mobs in reach, also during tasks), auto_eat (eat when food <= eat_below while idle, or <= 6 during a task, pausing it), flee (run when health <= flee_health with hostiles near; the task is stopped), sprint (on long straight walks), retaliate (hit back at a player who is hitting the bot, only in reach; an apology in chat ends it), beg (ask that player for mercy when nearly dead), fake_surrender (after begging, pause briefly and then run far away), shield (raise an off-hand shield between hits), tool_guard (never use a tool or weapon down to its last few uses), breathe (swim to air when the air supply runs low). Returns the current settings.",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "defend": {
+     "type": "boolean"
+    },
+    "auto_eat": {
+     "type": "boolean"
+    },
+    "flee": {
+     "type": "boolean"
+    },
+    "sprint": {
+     "type": "boolean"
+    },
+    "retaliate": {
+     "type": "boolean"
+    },
+    "beg": {
+     "type": "boolean"
+    },
+    "fake_surrender": {
+     "type": "boolean"
+    },
+    "shield": {
+     "type": "boolean"
+    },
+    "tool_guard": {
+     "type": "boolean"
+    },
+    "breathe": {
+     "type": "boolean"
+    },
+    "eat_below": {
+     "type": "integer",
+     "minimum": 0,
+     "maximum": 19
+    },
+    "flee_health": {
+     "type": "number",
+     "minimum": 0,
+     "maximum": 19
+    }
+   }
+  }
+ },
+ {
+  "name": "waypoint_set",
+  "description": "Remember a named place (default: where the bot stands). Waypoints are saved to disk per account and server and survive restarts.",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "name": {
+     "type": "string",
+     "minLength": 1,
+     "maxLength": 32
+    },
+    "x": {
+     "type": "number"
+    },
+    "y": {
+     "type": "number"
+    },
+    "z": {
+     "type": "number"
+    },
+    "note": {
+     "type": "string",
+     "maxLength": 120
+    }
+   },
+   "required": [
+    "name"
+   ]
+  }
+ },
+ {
+  "name": "waypoint_list",
+  "description": "List the remembered places with their distance (or dimension, if elsewhere).",
+  "parameters": {
+   "type": "object",
+   "properties": {}
+  }
+ },
+ {
+  "name": "waypoint_delete",
+  "description": "Forget a named place.",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "name": {
+     "type": "string",
+     "minLength": 1,
+     "maxLength": 32
+    }
+   },
+   "required": [
+    "name"
+   ]
+  }
+ },
+ {
+  "name": "goto_waypoint",
+  "description": "Walk to a remembered place in the current dimension.",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "name": {
+     "type": "string",
+     "minLength": 1,
+     "maxLength": 32
+    },
+    "range": {
+     "type": "number",
+     "minimum": 0.5,
+     "maximum": 16
+    }
+   },
+   "required": [
+    "name"
+   ]
+  }
+ },
+ {
+  "name": "chests",
+  "description": "What the bot remembers about storage (chests, barrels, shulker boxes) it has opened: position, free slots, contents and how old that snapshot is. With item, only storage holding it (nearest first) and the total.",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "item": {
+     "type": "string"
+    },
+    "radius": {
+     "type": "number",
+     "minimum": 1
+    }
+   }
+  }
+ },
+ {
+  "name": "forget_chest",
+  "description": "Drop one storage block from the chest index.",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "x": {
+     "type": "integer",
+     "minimum": -9007199254740991,
+     "maximum": 9007199254740991
+    },
+    "y": {
+     "type": "integer",
+     "minimum": -9007199254740991,
+     "maximum": 9007199254740991
+    },
+    "z": {
+     "type": "integer",
+     "minimum": -9007199254740991,
+     "maximum": 9007199254740991
+    }
+   },
+   "required": [
+    "x",
+    "y",
+    "z"
+   ]
+  }
+ },
+ {
+  "name": "store",
+  "description": "Put items away into storage: first into chests that already hold the same item, then into any with room; storage nearby that was never opened is opened and indexed. Without items it keeps gear, food, torches, buckets and one stack of building blocks and stores the rest; keep adds more items to hold on to.",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "items": {
+     "maxItems": 40,
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "keep": {
+     "maxItems": 40,
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    }
+   }
+  }
+ },
+ {
+  "name": "fetch",
+  "description": "Take an item from remembered storage (nearest first), from storage nearby that was never opened, or from nearby storage last opened more than 5 minutes ago (it may hold the item by now). Instead of item, food_points fetches the best food available until it is worth that many food points.",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "item": {
+     "type": "string"
+    },
+    "count": {
+     "type": "integer",
+     "minimum": 1,
+     "maximum": 2304
+    },
+    "food_points": {
+     "type": "integer",
+     "minimum": 1,
+     "maximum": 500
+    }
+   }
+  }
+ },
+ {
+  "name": "mine",
+  "description": "Mine in a pattern: tunnel (straight, height 2 or 3), stairs (a staircase down or up to to_y), branch (a main tunnel with side branches every branch_spacing blocks), or vein (all connected ore from one ore block at x,y,z). Only natural terrain and ores are dug; water or lava next to the way is sealed with cheap blocks, holes in the floor are filled, torches go down every torch_every blocks, and ores seen in the walls are followed (veins; ores limits which). Stops and reports at anything built, missing tools, a full inventory or a claim.",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "mode": {
+     "type": "string",
+     "enum": [
+      "tunnel",
+      "stairs",
+      "branch",
+      "vein"
+     ]
+    },
+    "direction": {
+     "type": "string",
+     "enum": [
+      "north",
+      "east",
+      "south",
+      "west"
+     ]
+    },
+    "length": {
+     "type": "integer",
+     "minimum": 1,
+     "maximum": 512
+    },
+    "to_y": {
+     "type": "integer",
+     "minimum": -9007199254740991,
+     "maximum": 9007199254740991
+    },
+    "height": {
+     "type": "integer",
+     "minimum": 2,
+     "maximum": 3
+    },
+    "branch_length": {
+     "type": "integer",
+     "minimum": 1,
+     "maximum": 64
+    },
+    "branch_spacing": {
+     "type": "integer",
+     "minimum": 2,
+     "maximum": 16
+    },
+    "torch_every": {
+     "type": "integer",
+     "minimum": 0,
+     "maximum": 64
+    },
+    "veins": {
+     "type": "boolean"
+    },
+    "ores": {
+     "maxItems": 8,
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "x": {
+     "type": "integer",
+     "minimum": -9007199254740991,
+     "maximum": 9007199254740991
+    },
+    "y": {
+     "type": "integer",
+     "minimum": -9007199254740991,
+     "maximum": 9007199254740991
+    },
+    "z": {
+     "type": "integer",
+     "minimum": -9007199254740991,
+     "maximum": 9007199254740991
+    }
+   }
+  }
+ },
+ {
+  "name": "breed",
+  "description": "Feed pairs of adult animals with their breeding food from the inventory (any item in #<animal>_food) so they make babies. Without animal it picks the kind with the most adults around that it has food for.",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "animal": {
+     "type": "string"
+    },
+    "pairs": {
+     "type": "integer",
+     "minimum": 1,
+     "maximum": 16
+    }
+   }
+  }
+ },
+ {
+  "name": "shear",
+  "description": "Shear sheep that still have wool, with shears from the inventory (all within 24 blocks, or count).",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "count": {
+     "type": "integer",
+     "minimum": 1,
+     "maximum": 64
+    }
+   }
+  }
+ },
+ {
+  "name": "milk",
+  "description": "Milk the nearest adult cow, goat or mooshroom with an empty bucket.",
+  "parameters": {
+   "type": "object",
+   "properties": {}
+  }
+ },
+ {
+  "name": "fish",
+  "description": "Fish with a rod from the inventory: finds open water within 12 blocks, casts, reels in on a bite, and repeats until count catches or seconds have passed.",
+  "parameters": {
+   "type": "object",
+   "properties": {
+    "count": {
+     "type": "integer",
+     "minimum": 1,
+     "maximum": 64
+    },
+    "seconds": {
+     "type": "integer",
+     "minimum": 10,
+     "maximum": 3600
+    }
+   }
+  }
+ }
+]
