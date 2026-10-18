@@ -80,7 +80,8 @@ has no password.
 - `data/tools.json`: the tool definitions, generated from MineMCP's MCP server by
   `tools/gen_tools.py` (needs `npm ci` in `core/mcp`). Each tool name is the core command it runs.
 
-Developer tools (not installed): `agent_probe` runs one request without the window, and
+Developer tools (not installed): `agent_probe` runs one request without the window,
+`llm_roundtrip` (with `tests/mock_gemini.py`) checks that Gemini thought signatures survive a tool call, and
 `window_shot` saves a PNG of the window on a headless GTK backend:
 
 ```sh

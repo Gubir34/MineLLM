@@ -56,3 +56,5 @@ add_executable(window_shot EXCLUDE_FROM_ALL tests/window_shot.c src/window.c src
                src/settings.c ${GRESOURCE_C})
 target_compile_definitions(window_shot PRIVATE MINELLM_VERSION="${PROJECT_VERSION}")
 target_link_libraries(window_shot PRIVATE PkgConfig::DEPS)
+add_executable(llm_roundtrip EXCLUDE_FROM_ALL tests/llm_roundtrip.c src/llm.c)
+target_link_libraries(llm_roundtrip PRIVATE PkgConfig::DEPS)

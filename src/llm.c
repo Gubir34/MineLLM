@@ -260,6 +260,10 @@ static JsonObject *openai_reply(JsonObject *body, char **err)
     else
         json_object_set_null_member(a, "content");
     g_free(clean);
+    /* Gemini puts its thought signatures in extra_content (on the message and on
+     * each tool call) and refuses the next request unless they come back as they were. */
+    if (json_object_has_member(msg, "extra_content"))
+        json_object_set_member(a, "extra_content", json_node_copy(json_object_get_member(msg, "extra_content")));
     if (json_object_has_member(msg, "tool_calls") && !json_object_get_null_member(msg, "tool_calls")) {
         JsonArray *calls = json_object_get_array_member(msg, "tool_calls");
         JsonArray *out = json_array_new();
@@ -286,6 +290,8 @@ static JsonObject *openai_reply(JsonObject *body, char **err)
                 json_object_set_string_member(f, "arguments", an && JSON_NODE_HOLDS_VALUE(an) ? json_node_get_string(an) : "{}");
             }
             json_object_set_object_member(c, "function", f);
+            if (json_object_has_member(call, "extra_content"))
+                json_object_set_member(c, "extra_content", json_node_copy(json_object_get_member(call, "extra_content")));
             json_array_add_object_element(out, c);
         }
         if (json_array_get_length(out))
