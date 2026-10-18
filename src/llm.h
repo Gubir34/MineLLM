@@ -17,6 +17,7 @@ typedef struct {
     gboolean needs_key;
     const char *key_env;      /* environment variable read when no key is stored */
     const char *model_hint;   /* placeholder for the model field */
+    const char *default_model; /* used when no model is set, or NULL */
 } LlmProvider;
 
 extern const LlmProvider llm_providers[];
@@ -28,6 +29,8 @@ typedef struct {
     int max_tokens;
 } LlmConfig;
 
+/* The model a request uses: the configured one, else the provider's default. */
+const char *llm_model(const LlmConfig *c);
 /* Checks the configuration; returns an error message (to free) or NULL. */
 char *llm_config_problem(const LlmConfig *c);
 

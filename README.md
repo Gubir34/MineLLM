@@ -19,7 +19,7 @@ model loop in the app itself, so no MCP client is needed.
 | Ollama | local models, no key; uses Ollama's own API with a 16k context so all tool definitions fit |
 | OpenAI (ChatGPT) | `OPENAI_API_KEY` or the key field |
 | Anthropic (Claude) | `ANTHROPIC_API_KEY` or the key field |
-| Google AI (Gemini) | `GEMINI_API_KEY` / `GOOGLE_API_KEY` or the key field |
+| Google AI (Gemini) | `GEMINI_API_KEY` / `GOOGLE_API_KEY` or the key field; with no model set it uses `gemini-flash-lite-latest`, which the free tier allows the most requests a day |
 | OpenRouter | `OPENROUTER_API_KEY` or the key field |
 | Groq | `GROQ_API_KEY` or the key field |
 | OpenAI-compatible server | LM Studio, vLLM, llama.cpp server...: give the address ending in `/v1` |

@@ -277,7 +277,8 @@ static void refresh_model_menu(void)
             memset(key, 0, strlen(key));
             g_free(url), g_free(key);
         }
-        owned[k] = *model ? g_strdup_printf("%s · %s", p->label, model) : g_strdup_printf("%s (not set up)", p->label);
+        const char *shown = *model ? model : p->default_model;
+        owned[k] = shown ? g_strdup_printf("%s · %s", p->label, shown) : g_strdup_printf("%s (not set up)", p->label);
         labels[k] = owned[k];
         g_free(model);
     }
@@ -299,8 +300,10 @@ static void model_switched(GObject *dd, GParamSpec *ps, gpointer ud)
     settings_use_provider(A->settings, llm_providers[i].id);
     apply_settings();
     refresh_model_menu();
-    if (*A->settings->model)
-        toast("Now using %s · %s%s", llm_providers[i].label, A->settings->model,
+    LlmConfig now;
+    fill_llm(&now);
+    if (*llm_model(&now))
+        toast("Now using %s · %s%s", llm_providers[i].label, llm_model(&now),
               agent_busy(A->agent) ? " (from the next step)" : "");
 }
 
@@ -629,7 +632,8 @@ static const LlmProvider *selected_provider(void)
 
 static void describe_provider_rows(const LlmProvider *p)
 {
-    char *t = g_strdup_printf("Model (e.g. %s)", p->model_hint);
+    char *t = p->default_model ? g_strdup_printf("Model (empty: %s)", p->default_model)
+                               : g_strdup_printf("Model (e.g. %s)", p->model_hint);
     adw_preferences_row_set_title(ADW_PREFERENCES_ROW(A->p_model), t);
     g_free(t);
     t = *p->base_url ? g_strdup_printf("API address (empty: %s)", p->base_url)

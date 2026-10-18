@@ -3,14 +3,16 @@
 #include <string.h>
 
 const LlmProvider llm_providers[] = {
-    {"ollama", "Ollama (local)", "http://127.0.0.1:11434", FALSE, NULL, "qwen3:8b"},
-    {"openai", "OpenAI (ChatGPT)", "https://api.openai.com/v1", TRUE, "OPENAI_API_KEY", "model name"},
-    {"anthropic", "Anthropic (Claude)", "https://api.anthropic.com/v1", TRUE, "ANTHROPIC_API_KEY", "claude-opus-5-5"},
+    {"ollama", "Ollama (local)", "http://127.0.0.1:11434", FALSE, NULL, "qwen3:8b", NULL},
+    {"openai", "OpenAI (ChatGPT)", "https://api.openai.com/v1", TRUE, "OPENAI_API_KEY", "model name", NULL},
+    {"anthropic", "Anthropic (Claude)", "https://api.anthropic.com/v1", TRUE, "ANTHROPIC_API_KEY", "claude-opus-5-5", NULL},
+    /* Flash-Lite: the free tier allows it far more requests a day than Flash or Pro;
+     * the -latest alias follows Google's newest Flash-Lite */
     {"google", "Google AI (Gemini)", "https://generativelanguage.googleapis.com/v1beta/openai", TRUE, "GEMINI_API_KEY",
-     "model name"},
-    {"openrouter", "OpenRouter", "https://openrouter.ai/api/v1", TRUE, "OPENROUTER_API_KEY", "vendor/model"},
-    {"groq", "Groq", "https://api.groq.com/openai/v1", TRUE, "GROQ_API_KEY", "model name"},
-    {"custom", "OpenAI-compatible server", "", FALSE, NULL, "model name"},
+     "gemini-flash-lite-latest", "gemini-flash-lite-latest"},
+    {"openrouter", "OpenRouter", "https://openrouter.ai/api/v1", TRUE, "OPENROUTER_API_KEY", "vendor/model", NULL},
+    {"groq", "Groq", "https://api.groq.com/openai/v1", TRUE, "GROQ_API_KEY", "model name", NULL},
+    {"custom", "OpenAI-compatible server", "", FALSE, NULL, "model name", NULL},
 };
 const int llm_n_providers = G_N_ELEMENTS(llm_providers);
 
@@ -44,12 +46,20 @@ static const char *api_key(const LlmConfig *c)
     return NULL;
 }
 
+const char *llm_model(const LlmConfig *c)
+{
+    if (c->model && *c->model)
+        return c->model;
+    const LlmProvider *p = llm_provider(c->provider);
+    return p && p->default_model ? p->default_model : "";
+}
+
 char *llm_config_problem(const LlmConfig *c)
 {
     const LlmProvider *p = llm_provider(c->provider);
     if (!p)
         return g_strdup_printf("unknown model provider \"%s\"", c->provider ? c->provider : "");
-    if (!c->model || !*c->model)
+    if (!*llm_model(c))
         return g_strdup_printf("choose a model for %s in Preferences", p->label);
     if (!*base_url(c))
         return g_strdup("set the server address (base URL ending in /v1) in Preferences");
@@ -103,7 +113,7 @@ static JsonArray *messages_for(const LlmConfig *c, JsonArray *messages)
 static JsonObject *openai_body(const LlmConfig *c, JsonArray *messages, JsonArray *tools)
 {
     JsonObject *b = json_object_new();
-    json_object_set_string_member(b, "model", c->model);
+    json_object_set_string_member(b, "model", llm_model(c));
     json_object_set_array_member(b, "messages", messages_for(c, messages));
     if (tools && json_array_get_length(tools))
         json_object_set_array_member(b, "tools", json_array_ref(tools));
@@ -154,7 +164,7 @@ static JsonObject *text_block(const char *text)
 static JsonObject *anthropic_body(const LlmConfig *c, JsonArray *messages, JsonArray *tools)
 {
     JsonObject *b = json_object_new();
-    json_object_set_string_member(b, "model", c->model);
+    json_object_set_string_member(b, "model", llm_model(c));
     json_object_set_int_member(b, "max_tokens", c->max_tokens > 0 ? c->max_tokens : 4096);
     JsonArray *out = json_array_new();
     for (guint k = 0; k < json_array_get_length(messages); k++) {
@@ -220,7 +230,7 @@ static JsonObject *anthropic_body(const LlmConfig *c, JsonArray *messages, JsonA
 static JsonObject *ollama_body(const LlmConfig *c, JsonArray *messages, JsonArray *tools)
 {
     JsonObject *b = json_object_new();
-    json_object_set_string_member(b, "model", c->model);
+    json_object_set_string_member(b, "model", llm_model(c));
     json_object_set_boolean_member(b, "stream", FALSE);
     JsonArray *out = json_array_new();
     for (guint k = 0; k < json_array_get_length(messages); k++) {
